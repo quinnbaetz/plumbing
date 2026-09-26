@@ -1,0 +1,982 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Zoned Hot Water Recirc</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@500;600;700&family=Public+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{
+  color-scheme: light;
+  --paper:#F2F4F1; --sheet:#FFFFFF; --ink:#1B2630; --muted:#5B6873; --rule:#D5DBD6;
+  --hot:#C9352B; --ret:#2463A8; --brass:#A87A1E; --ok:#2E7D4F; --warn:#B25F00;
+  --z1:#C9352B; --z2:#7B4FB0; --z3:#1F8A7A; --z4:#C26A12; --z5:#5C7A1F;
+  --chip:#E8ECE8; --planfilter:none;
+  --display:"Archivo Narrow","Arial Narrow",sans-serif;
+  --body:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --paper:#11171C; --sheet:#182128; --ink:#E4E9EC; --muted:#93A1AB; --rule:#2B3740;
+    --hot:#F0584C; --ret:#5B9BE6; --brass:#D6A444; --ok:#4FBF7C; --warn:#F0A04B;
+    --z1:#F0584C; --z2:#A988E0; --z3:#3CC2AE; --z4:#F09A45; --z5:#9CC24A; --chip:#222D35;
+    --planfilter: invert(0.88) hue-rotate(180deg);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --paper:#11171C; --sheet:#182128; --ink:#E4E9EC; --muted:#93A1AB; --rule:#2B3740;
+  --hot:#F0584C; --ret:#5B9BE6; --brass:#D6A444; --ok:#4FBF7C; --warn:#F0A04B;
+  --z1:#F0584C; --z2:#A988E0; --z3:#3CC2AE; --z4:#F09A45; --z5:#9CC24A; --chip:#222D35;
+  --planfilter: invert(0.88) hue-rotate(180deg);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper);color:var(--ink);font:15px/1.55 var(--body);padding-inline:16px;padding-block:0 64px}
+.wrap{max-width:1280px;margin:0 auto}
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;padding-block:28px 18px;border-bottom:2px solid var(--ink)}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;letter-spacing:.01em}
+h1{font-size:clamp(28px,4vw,44px);line-height:1.05;font-weight:700}
+h2{font-size:26px;font-weight:700}
+h3{font-size:18px;font-weight:600}
+.sheetno{font:600 12px/1.3 var(--mono);color:var(--muted);text-align:right;text-transform:uppercase;letter-spacing:.08em}
+.lede{max-width:72ch;color:var(--muted);margin:14px 0 0}
+nav.toc{display:flex;flex-wrap:wrap;gap:6px 18px;padding-block:12px;border-bottom:1px solid var(--rule);font:600 13px var(--display);text-transform:uppercase;letter-spacing:.06em}
+nav.toc a{color:var(--ink);text-decoration:none}
+nav.toc a:hover{color:var(--hot)}
+section{padding-block:36px 8px}
+section > .head{display:flex;align-items:baseline;gap:14px;margin-bottom:14px;flex-wrap:wrap}
+.tag{font:600 11px var(--mono);text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+p{max-width:75ch}
+.muted{color:var(--muted)}
+code,pre,.mono{font-family:var(--mono);font-size:12.5px}
+pre{background:var(--sheet);border:1px solid var(--rule);padding:14px;overflow-x:auto;line-height:1.45;border-radius:4px}
+a{color:var(--ret)}
+
+/* ---------- plan ---------- */
+.plan-grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;align-items:start}
+@media (max-width:980px){.plan-grid{grid-template-columns:1fr}}
+.plan-box{background:var(--sheet);border:1px solid var(--rule);border-radius:4px;overflow:hidden}
+.plan-scroll{overflow:auto;max-height:78vh}
+#plan{display:block;width:100%;min-width:760px;height:auto;touch-action:none;user-select:none}
+#plan image{filter:var(--planfilter)}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 12px;border-bottom:1px solid var(--rule);font-size:13px}
+.toolbar .sep{width:1px;height:22px;background:var(--rule)}
+button,.btn{font:600 12.5px var(--body);background:var(--chip);color:var(--ink);border:1px solid var(--rule);border-radius:3px;padding:6px 10px;cursor:pointer}
+button:hover{border-color:var(--ink)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--ret);outline-offset:1px}
+button.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+input,select{font:13px var(--body);background:var(--sheet);color:var(--ink);border:1px solid var(--rule);border-radius:3px;padding:5px 7px}
+input[type=number]{width:70px}
+label.inl{display:inline-flex;gap:6px;align-items:center}
+aside.panel{display:flex;flex-direction:column;gap:14px}
+.card{background:var(--sheet);border:1px solid var(--rule);border-radius:4px;padding:14px}
+.card h3{margin-bottom:8px}
+.zone-row{display:grid;grid-template-columns:14px 1fr auto auto;gap:8px;align-items:center;padding-block:6px;border-top:1px solid var(--rule)}
+.zone-row:first-of-type{border-top:0}
+.sw{width:14px;height:14px;border-radius:2px}
+.zone-row input{width:100%}
+.zone-row .trig{grid-column:2/5;font:11.5px var(--mono);color:var(--muted)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;padding:8px 12px;border-top:1px solid var(--rule)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.lg-line{width:24px;height:0;border-top:3px solid}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font:600 11px var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--mono);font-size:12.5px;white-space:nowrap}
+.tbl{overflow-x:auto;background:var(--sheet);border:1px solid var(--rule);border-radius:4px}
+tr.cat td{font:700 13px var(--display);text-transform:uppercase;letter-spacing:.07em;background:var(--chip)}
+tr.done td{opacity:.5}
+tr.done td.itm{text-decoration:line-through}
+.opt{font:600 10px var(--mono);border:1px solid var(--rule);padding:1px 5px;border-radius:2px;color:var(--muted);text-transform:uppercase}
+.totals{display:flex;flex-wrap:wrap;gap:24px;padding:12px;font-family:var(--mono);font-size:13px}
+.totals b{font-size:18px;font-family:var(--display)}
+ol.steps{padding-left:0;list-style:none;counter-reset:s;display:flex;flex-direction:column;gap:14px;max-width:88ch}
+ol.steps > li{counter-increment:s;display:grid;grid-template-columns:44px 1fr;gap:10px}
+ol.steps > li::before{content:counter(s,decimal-leading-zero);font:700 20px var(--display);color:var(--hot);border-top:2px solid var(--hot);padding-top:2px}
+ol.steps li h3{margin-bottom:4px}
+ol.steps li ul{margin:4px 0 0;padding-left:18px}
+.callout{border-left:3px solid var(--brass);background:var(--sheet);padding:10px 14px;max-width:88ch;margin-block:12px}
+.callout.warn{border-color:var(--warn)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+@media (max-width:860px){.two{grid-template-columns:1fr}}
+.stat{display:flex;flex-wrap:wrap;gap:12px}
+.stat .card{flex:1 1 180px}
+.stat b{display:block;font:700 26px var(--display);font-variant-numeric:tabular-nums}
+#schem{width:100%;height:auto;display:block}
+#schem text{font-family:var(--mono);font-size:11px;fill:var(--ink)}
+.flow{stroke-dasharray:10 8;animation:flow 0.9s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-18}}
+@media (prefers-reduced-motion:reduce){.flow{animation:none}}
+.hint{font-size:12px;color:var(--muted)}
+.chk{width:16px;height:16px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <div>
+    <div class="tag">Baetz residence · Lafayette CA · hot-water repipe</div>
+    <h1>Zoned Hot Water Recirc</h1>
+  </div>
+  <div class="sheetno">Sheet P-1 · Rev A<br>2026-09-25</div>
+</header>
+<p class="lede">Hot water gets repiped in PEX under the house. A supply manifold at the water heaters sends four new loops out to room manifolds (master toilet wall, WIC 03, WIC 02, pantry), plus the existing laundry/powder loop, and each loop comes back to the heaters through its own motorized valve. Home Assistant runs the pump only for the zone someone is about to use, such as when a shower light turns on, and stops once that zone's return pipe is hot. This replaces the current pump that circulates through the whole house.</p>
+
+<nav class="toc">
+  <a href="#old">Old system</a><a href="#how">How it works</a><a href="#plan-sec">Layout</a><a href="#parts">Parts list</a><a href="#install">Install</a><a href="#control">Controls</a><a href="#energy">Energy</a><a href="#alt">Simpler option</a><a href="#sources">Sources</a>
+</nav>
+
+<!-- ============ OLD SYSTEM ============ -->
+<section id="old">
+  <div class="head"><h2>Why the old loops failed</h2><span class="tag">2 loops · 1" PEX · bare in the ceiling · long branches</span></div>
+  <div class="two">
+  <div>
+  <p>The old system was two big loops of 1" PEX covering the whole house. They ran through the ceiling with no insulation, with long branches down to the rooms. Each complaint has a physical cause:</p>
+  <ul>
+    <li><b>It took forever to heat up.</b> 1" PEX holds 0.030 gal/ft, more than three times as much as 1/2" (0.009). A 250 ft loop holds about 7.5 gal. Without the pump, a shower drawing ~1.2 gpm of hot has to flush most of that first, which takes several minutes.</li>
+    <li><b>Some showers never got hot.</b> Two causes stack up.
+      <ul>
+        <li><b>Long branches are dead legs.</b> The pump only moves water around the loop, never down a branch. So even with the loop hot, the branch to a far shower holds cooled water that has to be flushed first.</li>
+        <li><b>The loop cools along its length.</b> With no balancing valves, the shorter loop steals most of the pump's flow. A bare 250 ft 1" loop loses ~6,250 Btu/h; at 0.5 gpm the water drops about 25°F by the far end (ΔT = loss ÷ 500 × gpm). 125°F out means roughly 100°F at the last branch, before the branch cools it further.</li>
+      </ul></li>
+    <li><b>Running the pump wasted a lot.</b> Heat loss depends on pipe surface area and temperature, not on use. Two big loops kept hot all day lose heat whether anyone is running water or not.</li>
+    <li><b>It heated the house.</b> The pipe was bare and in the ceiling, so its heat went straight into the rooms below. 500 ft of bare 1" pipe at 120°F gives off about 12,500 Btu/h, about 3.7 kW. That's a large space heater running in the ceiling, and in summer the AC has to pump that heat back out. The new loops run under the floor in the crawl space with 1" wall insulation. California's recirculation rules (RA4.4.7) also don't allow recirculation piping run up into the attic and back down.</li>
+  </ul>
+  </div>
+  <div>
+  <table>
+    <tr><th></th><th>Old</th><th>New</th></tr>
+    <tr><td>Loops</td><td>2, whole house</td><td>4 new + 1 kept, one room each</td></tr>
+    <tr><td>Pipe</td><td>1" PEX, bare, in the ceiling</td><td>3/4" master, 1/2" others, 1" wall insulation</td></tr>
+    <tr><td>Water per loop</td><td class="num">~7.5 gal</td><td class="num" id="oldNewGal">0.8–2.2 gal</td></tr>
+    <tr><td>Uncirculated pipe</td><td>long branches</td><td>manifold → fixture only, inside the wall</td></tr>
+    <tr><td>Circulates</td><td>whole house, for hours</td><td>one loop, ~1 min, on demand</td></tr>
+    <tr><td>Flow balance</td><td>short loop steals flow</td><td>one valve open at a time, nothing to balance</td></tr>
+    <tr><td>Heat into the house</td><td class="num">~12,500 Btu/h into the rooms while running</td><td class="num">~0 between uses; crawl space, insulated</td></tr>
+  </table>
+  <p class="hint">Old-loop figures assume ~250 ft per loop, from the house footprint. Set the real length in the Energy section if you know it. Heat loss uses the Taco chart for 1" PEX-a (25 Btu/h·ft bare at 120°F).</p>
+  </div>
+  </div>
+</section>
+
+<!-- ============ HOW IT WORKS ============ -->
+<section id="how">
+  <div class="head"><h2>How it works</h2><span class="tag">schematic · not to scale</span></div>
+  <div class="two">
+    <div class="card" style="padding:8px">
+      <svg id="schem" viewBox="0 -24 640 360" role="img" aria-label="Schematic: water heaters feed mixing valve, supply manifold starts four loops to room manifolds; each zone return passes through check valve, temperature sensor and motorized valve into a common return, pump, back to heater cold inlet"></svg>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;padding:6px" id="schemBtns"></div>
+    </div>
+    <div>
+      <p><b>Four loops from one manifold.</b> Heaters → mixing valve → a <b>supply manifold</b> beside the heaters, under the rear deck. Each outlet starts a loop: four new ones, plus a fifth outlet that picks up the existing laundry/powder loop. The loop runs out under the house (3/4" to the master bath for the tub and multiple heads, 1/2" to the single baths and kitchen) to the <b>existing room manifold</b> in the wall, which becomes the middle of the loop. Its outlets keep feeding that room's fixtures as they do today. The loop enters at one end of the manifold, and a new connection at the other end carries it <b>back to the heaters</b>.</p>
+      <p><b>The valve is on the far end.</b> Each loop's back leg lands on a <b>return manifold</b> next to the supply manifold. Per loop, in flow order: isolation valve, spring check, temperature sensor on a copper stub, normally-closed motorized valve. That valve is your "turn off the far end" switch. Closed, the loop still delivers hot water to every fixture (it acts like a normal dead-end line), it just can't circulate. Open, and with the pump running, hot water flows around that one loop. After the valves the four loops merge into one ECM pump and a check valve, then feed the cold inlet of both tanks.</p>
+      <p><b>Why the valve lives at the heater end.</b> The far end of every loop physically comes home to the heaters, so all four valves, sensors, the pump and the controller sit on one board in one place. Nothing electrical goes in the bathrooms except a button.</p>
+      <p><b>Demand, not a timer.</b> A trigger opens that zone's valve. Triggers are a button (the code-compliant one), a bathroom light, or presence. After 5 s the pump starts. The ESP32 stops it when the zone's return hits <b>102°F or rises 10°F</b>, or after <b>5 min</b>, whichever comes first. These are the California Title 24 demand-control limits (RA4.4.9). They live in firmware, so a Home Assistant outage can't leave the pump running. The rest of the day nothing moves, so the pipes don't bleed heat into the crawl space.</p>
+      <p><b>Safe when it fails.</b> No valve ever sits between the heater and a faucet. A dead controller, valve, or pump means you wait for hot water like a house without recirc. Check valves stop cold water from backfeeding a loop through single-handle faucets.</p>
+      <p><b>Thermal battery.</b> Your heaters already go to 150°F on solar surplus. The tank stores that heat. Running the pump through all loops mostly heats the crawl space, so the new design keeps "open all valves + pump" as an optional mode rather than the default. See Controls.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PLAN ============ -->
+<section id="plan-sec">
+  <div class="head"><h2>Layout</h2><span class="tag">drag anything · saved in this browser</span></div>
+  <div class="callout">The floor plan is the 2023 permit set from the brain. Positions follow your notes: heaters in the top-right corner under the rear main deck, room manifolds beside the master toilet, in WIC 03, in WIC 02 and on the pantry's east wall. South is the top (rear-deck) edge. <b>Laundry and powder</b> stay on their existing loop. It gets the 5th outlet on the supply manifold and the 5th valve lane on the return manifold, and no new pipe is bought for it.</div>
+  <div class="plan-grid">
+    <div class="plan-box">
+      <div class="toolbar">
+        <label class="inl" for="southSel">South edge
+          <select id="southSel"><option value="top">Top (rear deck)</option><option value="bottom">Bottom (entry)</option><option value="left">Left (master)</option><option value="right">Right (living)</option></select>
+        </label>
+        <span class="sep"></span>
+        <label class="inl" for="pxft">Scale <input id="pxft" type="number" step="0.1" min="2" max="60"> px/ft</label>
+        <button id="calBtn" type="button" title="Click two points on the plan, then enter the real distance">Calibrate</button>
+        <span id="calUI" hidden><label class="inl" for="calFt">Distance between points <input id="calFt" type="number" value="21" step="0.5"> ft</label> <button id="calApply" type="button">Apply</button></span>
+        <span class="sep"></span>
+        <button id="exportBtn" type="button">Export JSON</button>
+        <label class="btn" for="importFile">Import</label><input id="importFile" type="file" accept="application/json" hidden>
+        <button id="resetBtn" type="button">Reset layout</button>
+        <span id="resetConfirm" hidden><span class="hint">Erase your moves?</span> <button id="resetYes" type="button">Yes, reset</button> <button id="resetNo" type="button">Cancel</button></span>
+      </div>
+      <div class="plan-scroll"><svg id="plan" viewBox="0 0 1820 890" aria-label="Interactive floor plan with plumbing overlay"></svg></div>
+      <div class="legend">
+        <span><i class="lg-line" style="border-color:var(--hot)"></i>loop out, 3/4" master / 1/2" others (supply manifold → room manifold)</span>
+        <span><i class="lg-line" style="border-color:var(--hot);border-top-width:2px;opacity:.7"></i>1/2" twig to fixture (by zone)</span>
+        <span><i class="lg-line" style="border-color:var(--ret);border-top-style:dashed"></i>loop back to heaters, 1/2" or 3/4"</span>
+        <span><i class="lg-line" style="border-color:var(--hot);border-top-width:8px;opacity:.3"></i>existing loop, kept (laundry + powder)</span>
+        <span><svg width="14" height="14" aria-hidden="true"><rect x="1" y="1" width="12" height="12" fill="var(--brass)"/></svg>manifold</span>
+        <span><svg width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="5" fill="var(--sheet)" stroke="var(--ink)" stroke-width="2"/></svg>fixture (dashed orange ring = line over 10 ft from its room manifold)</span>
+      </div>
+    </div>
+    <aside class="panel">
+      <div class="card">
+        <h3>Test a trigger</h3>
+        <div style="display:flex;flex-wrap:wrap;gap:6px" id="simBtns"></div>
+        <p class="hint" id="simText" style="margin:8px 0 0">Pick a zone to see what runs.</p>
+      </div>
+      <div class="card">
+        <h3>Selected</h3>
+        <div id="insp" class="hint">Click a marker. Drag to move it.</div>
+      </div>
+      <div class="card">
+        <h3>Zones</h3>
+        <div id="zoneList"></div>
+      </div>
+    </aside>
+  </div>
+      <div class="card" style="margin-top:18px">
+        <h3>Pipe run estimate</h3>
+        <div class="tbl" style="border:0"><table id="lenTbl"></table></div>
+        <p class="hint" style="margin:6px 0 0">Runs are routed square to the joists with 2–3 ft of drop at each end. A loop's back leg over 80 ft becomes 3/4". Purge is the water in the whole loop (out + back) that the pump pushes before the return sensor sees hot, at ~1–1.2 GPM (1/2" back) or ~2 GPM (3/4"). Out-leg drop is the pressure lost between the heaters and the room manifold at that loop's peak hot draw (master 5 gpm for tub fill + multiple heads, others 2.5 gpm for a 1.8 gpm shower plus a 1.2 gpm lav, both under California flow limits). Under ~10 psi is fine on typical 55–70 psi street pressure; orange means consider 3/4". Parts quantities add 15% waste.</p>
+      </div>
+</section>
+
+<!-- ============ PARTS ============ -->
+<section id="parts">
+  <div class="head"><h2>Parts list</h2><span class="tag">researched 2026-09-25 · quantities follow the layout</span></div>
+  <div class="callout"><b>How the picks were chosen.</b> Four research passes priced each part at pro suppliers (SupplyHouse, PexUniverse, Apex, Midwest Supply, Home Depot) and against Amazon and AliExpress. California law (AB1953) requires anything touching drinking water to be lead-free with a listing mark (NSF 61/372, cUPC, CSA), and loops at up to 140°F need CL5-rated PEX. Most marketplace plumbing parts show no listing, so an inspector can't accept them. Where a marketplace item is genuine and certified, it's marked <span class="opt" style="color:var(--ok);border-color:var(--ok)">OK</span>. Several picks are Amazon listings of the real brand. Electronics that never touch water (buttons, probes, relay board) are fine from Amazon or AliExpress. Before buying: measure static water pressure (sets 1 vs 2 expansion tanks), check the existing loop's pipe size (sets the manifold variant), confirm each wall manifold's connection type, and ask U.S. Solid for the valve's NSF certificate. AliExpress prices are from search results; its pages blocked direct checks.</div>
+  <div class="tbl"><table id="partsTbl"></table></div>
+  <div class="totals" id="totals"></div>
+  <p class="hint">Tick items as you buy them (saved in this browser). <span class="opt">opt</span> rows are optional and left out of the core total.</p>
+</section>
+
+<!-- ============ INSTALL ============ -->
+<section id="install">
+  <div class="head"><h2>Install</h2><span class="tag">in order</span></div>
+  <div id="installBody">
+<div class="callout warn"><b>Permit first.</b> A repipe needs a permit in Lafayette (Contra Costa building). For an alteration, California's prescriptive path allows only <b>demand recirculation with manual on/off control</b> (RA4.4.9). That is why each zone gets a push button. Lights and presence are extras layered on top. The plan set needs a wiring diagram for the pump and controls (3C-REN). Tell the inspector: "manual demand recirc, 102°F / 10°F-rise cutoff, 5-min max, check valve in loop."</div>
+<ol class="steps">
+<li><div><h3>Lock the layout</h3><p>Drag the manifolds, heaters and fixtures on the plan above to match reality. Calibrate the scale against a known dimension (e.g. the 21' master bedroom). Any fixture line with an orange ring runs over 10 ft from its room manifold. Export the JSON. Any loop back leg over 80 ft upsizes to 3/4" automatically.</p></div></li>
+<li><div><h3>Heater room</h3><ul>
+<li>Check the two tanks are piped <b>reverse-return</b> (first in, last out) so they share load. Re-pipe while you're in there if not.</li>
+<li>Install the expansion tank on the common cold header, precharged to house pressure.</li>
+<li>Install the mixing valve on the combined hot outlet, feeding the supply manifold. Heaters can reach 150°F; the mixer sends ~125°F to the house.</li>
+<li>Add the return tee into the cold header <b>downstream of the expansion tank, upstream of the split</b> to both heaters. Also run a throttled branch to the mixer's cold port, per Caleffi, to avoid temperature creep. <b>Never use the tank drain as the return inlet</b> (A.O. Smith).</li></ul></div></li>
+<li><div><h3>Mount the supply and return manifolds</h3><p>On a board beside the heaters under the deck: the mixing valve feeds the 1" supply manifold, with an isolation valve on each of the four 3/4" outlets. Mount the return manifold right next to it so each loop's out and back ends sit side by side. Label the outlets Z1–Z5. Z5 reconnects the existing laundry/powder loop: cut it in at the heaters, supply end to outlet 5 and return end to lane 5.</p></div></li>
+<li><div><h3>Run each loop out</h3><p>From each supply outlet, run PEX-A out to its room manifold (3/4" to the master, 1/2" to the others): master toilet wall, WIC 03, WIC 02, pantry east wall. Hang it every 32" or closer, leave expansion offsets on long straight runs, and keep PEX 6" or more from any flue. At the room, come up through the floor to the <b>existing wall manifold</b> and connect to its inlet, with an isolation valve below the floor.</p></div></li>
+<li><div><h3>Open the far end of each room manifold</h3><p>The loop has to flow <i>through</i> the manifold, so it needs a way out at the end opposite the inlet. On most manifolds that end is capped or plugged: swap the cap for an adapter to PEX. If the manifold is closed at that end (e.g. a cast one-piece body), tee the return off the last fixture outlet instead. Check each manifold's size and connection type (copper sweat, PEX crimp or ProPEX) before buying adapters. The existing fixture lines stay as they are.</p></div></li>
+<li><div><h3>Bring each loop home</h3><p>From that new far-end connection, run the back leg down through the floor and home to the return manifold (1/2", or 3/4" if over 80 ft). <b>Label both ends</b> with the loop number and color.</p></div></li>
+<li><div><h3>Build the return manifold</h3><p>Per loop, in flow order:</p><ul>
+<li>isolation ball valve</li><li>spring check</li><li>6" copper stub with the DS18B20 clamped on (stainless clamp, thermal paste)</li><li>3-wire motorized valve (the far-end valve)</li></ul><p>Merge into the header, then: pump (arrow toward heater), main check, isolation valve, cold-header tee.</p></div></li>
+<li><div><h3>Pressure test before insulating</h3><p>Typically 100 psi (or working pressure) for 15 min with no drop. Confirm the number with the inspector. Get the rough inspection signed off now.</p></div></li>
+<li><div><h3>Insulate</h3><p>1" wall on the loop-out and back legs, the manifolds and the board, including elbows and tees. Fixture lines get at least 1/2". Buy copper-size ID (PEX OD = CTS). Use elastomeric instead of fiberglass near vents or anywhere rodents nest. Leave the sensor stubs wrapped separately so you can reach them.</p></div></li>
+<li><div><h3>Wire the controller</h3><ul>
+<li>24 VDC supply. Each valve on one SPDT relay: <span class="mono">COM → +24 V, NO → red (open), NC → blue (close), yellow → 0 V</span>. Relay drop = valve drives closed.</li>
+<li>Pump on a relay-switched 120 V outlet. Retire the Tuya plug.</li>
+<li>DS18B20s daisy-chained on one 3-wire 1-Wire bus, 4.7 kΩ pull-up, under ~10 m. Keep low-voltage wire away from 120 V.</li></ul></div></li>
+<li><div><h3>Commission</h3><ul>
+<li>Flash ESPHome and read sensor addresses from the log. Warm each copper stub by hand to map it.</li>
+<li>Click each valve and confirm 3–5 s travel and that it closes when the relay drops.</li>
+<li>Purge air: turn on "Recirc all zones" with a faucet open in each zone, 2–3 min.</li>
+<li>Trigger each zone from cold and time it. The far zone should finish in about 2 min. If not, raise the Taco speed or upsize that return.</li>
+<li>Fault tests: unplug a probe mid-cycle (pump must stop, log shows <span class="mono">nanF</span>). Close a zone's hand valve (5-min cap must fire). Confirm the pump never runs with all valves closed.</li>
+<li>Crossover test: pump off, run a single-handle faucet in each zone, and watch that return. If it goes cold, that check valve leaks.</li>
+<li>Track kWh for 2–4 weeks against the baseline below.</li></ul></div></li>
+</ol></div>
+</section>
+
+<!-- ============ CONTROL ============ -->
+<section id="control">
+  <div class="head"><h2>Controls</h2><span class="tag">ESPHome + Home Assistant</span></div>
+  <div id="controlBody">
+<div class="two">
+<div>
+<p>Split of duties:</p>
+<ul>
+<li><b>ESP32 (ESPHome)</b> owns the hardware and the safety rules: 102°F / 10°F rise / 5 min, pump interlock, probe-fault stop. It exposes four "Demand Zn" buttons (one per loop) plus a "Recirc all zones" switch.</li>
+<li><b>Home Assistant</b> decides <i>when</i>: buttons, lights, presence. It only ever presses a demand button, so an HA crash can't leave anything running.</li>
+</ul>
+<p>Your existing entities map straight in (I guessed Birdie's bath is Bath 03; swap Z2/Z3 if not):</p>
+<table>
+<tr><th>Zone</th><th>Triggers</th></tr>
+<tr><td>Z1 Master bath</td><td class="mono">light.main_bathroom_lights</td></tr>
+<tr><td>Z2 Bath 03 (WIC 03)</td><td class="mono">light.birdie_bathroom_lights<br>light.birdies_bathroom_vanity</td></tr>
+<tr><td>Z3 Bath 02 (WIC 02)</td><td class="mono">light.guest_bathroom_shower_lights<br>light.guest_bathroom_lights</td></tr>
+<tr><td>Z4 Kitchen (pantry)</td><td>kitchen presence (new), 06:00–21:00</td></tr>
+<tr><td>Z5 Laundry + powder (existing loop)</td><td>powder light (new); laundry exempt</td></tr>
+</table>
+<div class="callout"><b>Thermal battery.</b> The "PW = 100% → pump" automation today circulates hot water through the whole loop. The tanks at 150°F are the actual battery. Circulating mostly moves that heat into the crawl space. Keep the automation raising the setpoint and drop the pump step. If you want the pump anyway, it calls "Recirc all zones", which the firmware caps at 15 min. That mode goes past the Title 24 run limits, so leave it disabled for inspection.</div>
+</div>
+<div>
+<h3>ESPHome: recirc-manifold.yaml</h3>
+<pre>esphome:
+  name: recirc-manifold
+esp32:
+  board: esp32dev
+  framework: { type: esp-idf }
+logger:
+api:
+ota:
+  - platform: esphome
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+one_wire:
+  - platform: gpio
+    pin: GPIO32              # 4.7k pull-up to 3V3
+
+sensor:   # addresses come from the boot log; warm each pipe by hand to map them
+  - { platform: dallas_temp, address: 0x0000000000000001, id: t_z1, name: &quot;Return Z1 Master bath&quot;,    update_interval: 2s }
+  - { platform: dallas_temp, address: 0x0000000000000002, id: t_z2, name: &quot;Return Z2 Bath 03&quot;,    update_interval: 2s }
+  - { platform: dallas_temp, address: 0x0000000000000003, id: t_z3, name: &quot;Return Z3 Bath 02&quot;, update_interval: 2s }
+  - { platform: dallas_temp, address: 0x0000000000000004, id: t_z4, name: &quot;Return Z4 Kitchen&quot;,        update_interval: 2s }
+  - { platform: dallas_temp, address: 0x0000000000000006, id: t_z5, name: &quot;Return Z5 Laundry+powder (existing)&quot;, update_interval: 2s }
+  - { platform: dallas_temp, address: 0x0000000000000005, id: t_hot, name: &quot;Heater outlet&quot;,           update_interval: 10s }
+
+switch:   # internal: only firmware drives the hardware
+  - { platform: gpio, pin: GPIO2,  id: v1,   internal: true, restore_mode: ALWAYS_OFF }
+  - { platform: gpio, pin: GPIO15, id: v2,   internal: true, restore_mode: ALWAYS_OFF }
+  - { platform: gpio, pin: GPIO5,  id: v3,   internal: true, restore_mode: ALWAYS_OFF }
+  - { platform: gpio, pin: GPIO4,  id: v4,   internal: true, restore_mode: ALWAYS_OFF }
+  - { platform: gpio, pin: GPIO16, id: v5,   internal: true, restore_mode: ALWAYS_OFF }   # map pins to your board's relays
+  - { platform: gpio, pin: GPIO14, id: pump, internal: true, restore_mode: ALWAYS_OFF }
+  - platform: template        # thermal-battery / purge mode: all valves, 15 min cap
+    name: &quot;Recirc all zones&quot;
+    id: all_mode
+    optimistic: true
+    restore_mode: ALWAYS_OFF
+
+globals:
+  - { id: req,    type: int, initial_value: &#x27;0&#x27; }   # request bitmask from HA
+  - { id: active, type: int, initial_value: &#x27;0&#x27; }   # zones circulating now
+
+button:   # HA presses these
+  - { platform: template, name: &quot;Demand Z1&quot;, on_press: { lambda: &#x27;id(req) |= 1;&#x27; } }
+  - { platform: template, name: &quot;Demand Z2&quot;, on_press: { lambda: &#x27;id(req) |= 2;&#x27; } }
+  - { platform: template, name: &quot;Demand Z3&quot;, on_press: { lambda: &#x27;id(req) |= 4;&#x27; } }
+  - { platform: template, name: &quot;Demand Z4&quot;, on_press: { lambda: &#x27;id(req) |= 8;&#x27; } }
+  - { platform: template, name: &quot;Demand Z5&quot;, on_press: { lambda: &#x27;id(req) |= 16;&#x27; } }
+
+binary_sensor:
+  - platform: template
+    name: &quot;Recirc pump running&quot;
+    lambda: &#x27;return id(pump).state;&#x27;
+
+interval:
+  - interval: 1s
+    then:
+      - lambda: |-
+          // Title 24 RA4.4.9/10 limits enforced here, independent of HA.
+          const float MAX_F = 102.0f, RISE_F = 10.0f;
+          const uint32_t MAX_MS = 300000, ALL_MS = 900000, VALVE_TRAVEL_MS = 5000;
+          // ponytail: consts, not HA number entities. Upgrade: template `number` if tuning gets frequent.
+          const int N = 5;
+          static uint32_t start[N] = {0}, all_start = 0;
+          static float t0[N];
+          switch_::Switch *v[N] = {id(v1), id(v2), id(v3), id(v4), id(v5)};
+          sensor::Sensor  *t[N] = {id(t_z1), id(t_z2), id(t_z3), id(t_z4), id(t_z5)};
+          uint32_t now = millis();
+          bool ready = false;
+
+          if (id(all_mode).state) {                     // thermal battery: all open, time-capped
+            if (all_start == 0) { all_start = now; for (auto s : v) s-&gt;turn_on(); }
+            if (now - all_start &gt; ALL_MS) id(all_mode).turn_off();
+            else ready = (now - all_start &gt; VALVE_TRAVEL_MS);
+          } else if (all_start != 0) {
+            all_start = 0; for (int i = 0; i &lt; N; i++) if (!(id(active) &amp; (1&lt;&lt;i))) v[i]-&gt;turn_off();
+          }
+
+          for (int i = 0; i &lt; N; i++) {
+            float f = t[i]-&gt;state * 1.8f + 32.0f;          // NaN if probe fault
+            int bit = 1 &lt;&lt; i;
+            if (id(req) &amp; bit) {
+              id(req) &amp;= ~bit;
+              if (!(id(active) &amp; bit) &amp;&amp; !isnan(f) &amp;&amp; f &lt; MAX_F) {
+                id(active) |= bit; start[i] = now; t0[i] = f; v[i]-&gt;turn_on();
+                ESP_LOGI(&quot;recirc&quot;, &quot;Z%d start %.1fF&quot;, i+1, f);
+              }
+            }
+            if (id(active) &amp; bit) {
+              bool done = isnan(f) || f &gt;= MAX_F || f &gt;= t0[i] + RISE_F || (now - start[i]) &gt; MAX_MS;
+              if (done) {
+                id(active) &amp;= ~bit; if (!id(all_mode).state) v[i]-&gt;turn_off();
+                ESP_LOGI(&quot;recirc&quot;, &quot;Z%d stop %.1fF after %us&quot;, i+1, f, (now-start[i])/1000);
+              } else if (now - start[i] &gt; VALVE_TRAVEL_MS) {
+                ready = true;                               // valve fully open
+              }
+            }
+          }
+          // Interlock: pump only runs with at least one valve open. Never dead-head.
+          if (ready &amp;&amp; !id(pump).state) id(pump).turn_on();
+          if (!ready &amp;&amp; id(pump).state) id(pump).turn_off();</pre>
+</div>
+</div>
+<div class="two">
+<div><h3>HA automation, one per zone</h3><pre>alias: Recirc Z1 master bath
+mode: single
+triggers:
+  - trigger: state            # code-compliant manual control
+    entity_id: event.master_bath_recirc_button
+  - trigger: state            # replaces &quot;Hot Water Pump - On with Main Shower Light&quot;
+    entity_id: light.main_bathroom_lights
+    to: &quot;on&quot;
+conditions:
+  - condition: numeric_state  # loop still warm -&gt; skip
+    entity_id: sensor.recirc_manifold_return_z1_master_bath
+    below: 95
+actions:
+  - action: button.press
+    target: { entity_id: button.recirc_manifold_demand_z1 }
+  - delay: &quot;00:15:00&quot;         # debounce: mode single swallows repeats
+
+# Z2 Bath 03: light.birdie_bathroom_lights
+# Z3 Bath 02: light.guest_bathroom_shower_lights, light.guest_bathroom_lights
+# Z4 Kitchen: kitchen presence 06:00-21:00
+# Z5 Laundry+powder (existing loop): powder light; laundry is exempt, trigger optional</pre></div>
+<div><h3>Rewire the existing automations</h3><pre># Edit automation.hot_water_pump_thermal_battery_pw_100_heater_150degf:
+actions:
+  - action: switch.turn_on
+    target: { entity_id: switch.recirc_manifold_recirc_all_zones }   # firmware caps it at 15 min
+# then disable automation.hot_water_pump_on_with_main_shower_light and
+# unplug/retire switch.hot_water_pump_socket_1 (the Tuya plug).</pre>
+<p class="hint">Runnable check for the firmware: during commissioning, unplug one probe mid-cycle. The log must show <span class="mono">Zx stop nanF</span> and the pump relay must drop.</p></div>
+</div></div>
+</section>
+
+<!-- ============ ENERGY ============ -->
+<section id="energy">
+  <div class="head"><h2>Energy</h2><span class="tag">estimate from your layout</span></div>
+  <div id="energyBody">
+<p>The biggest win is going from 24/7 circulation to demand. Title 24's own performance model charges continuous recirc at <b>9.8×</b> the distribution energy of a non-recirc system; manual demand is 1.75×. Insulation is the second biggest win. Numbers below use your layout lengths and the Taco heat-loss chart (120°F water, 68°F air; a cold crawl space loses more). Adjust the inputs.</p>
+<div id="energyCalc">
+<div class="toolbar" style="border:1px solid var(--rule);border-radius:4px;background:var(--sheet);margin-bottom:12px">
+<label class="inl" for="ehrs">Old pump hours/day <input id="ehrs" type="number" min="0" max="24" step="1"></label>
+<label class="inl" for="eloop">Old loops, total ft of 1" (0 = 500) <input id="eloop" type="number" min="0" step="10"></label>
+<label class="inl" for="ebare">Old loops <select id="ebare"><option value="1">bare pipe</option><option value="0">1/2" foam</option></select></label>
+<label class="inl" for="eevents">Triggers/day (new) <input id="eevents" type="number" min="0" step="1"></label>
+<label class="inl" for="ecop">Heater COP <input id="ecop" type="number" min="0.5" max="5" step="0.1"></label>
+<label class="inl" for="erate">$/kWh <input id="erate" type="number" min="0" step="0.01"></label>
+</div>
+<div class="stat" id="eOut"></div>
+</div>
+<p class="hint">COP defaults to 3.0 on the assumption your A.O. Smith units are heat-pump water heaters. Set 1.0 if they're resistance. All three figures are estimates. NREL modelling found demand recirc roughly energy-neutral against a compact, insulated system with <i>no</i> recirc. The real gain here is against the current 24/7 loop, plus 30–36% less water down the drain while waiting.</p></div>
+</section>
+
+<!-- ============ ALT ============ -->
+<section id="alt">
+  <div class="head"><h2>Simpler option</h2><span class="tag">if you want fewer moving parts</span></div>
+  <div id="altBody">
+<div class="two">
+<div>
+<h3>Thermostatic balancing valves, no controller</h3>
+<p>Put a Caleffi ThermoSetter 116 (~$236) or Watts CircuitSolver on each return and trigger one demand pump. Each valve throttles its own loop once it's hot. No motorized valves, no ESP32, no firmware.</p>
+<p><b>Why it's not the pick:</b> every trigger heats <i>all four</i> loops, about 4× the heat per event (~30 therms/yr equivalent extra at 5 events/day). The four valves also cost ~$950, against ~$150 for four motorized valves plus sensors. Neither valve fully closes: the Caleffi bottoms out at Cv 0.23 and CircuitSolver bypasses 0.2 GPM.</p>
+</div>
+<div>
+<h3>Off-the-shelf single-zone demand</h3>
+<p>Grundfos ALPHA HWR-D has a native push-button demand mode (102°F / 5 min). Metlund D'MAND is a turnkey demand pump. Either is a fine one-box answer if you ever give up on zoning. Both treat the house as one loop, which is what you're trying to get away from.</p>
+<p><b>Not an option:</b> Viega ManaBloc home-run manifolds. Viega says they're not for use with recirculation loops.</p>
+</div>
+</div></div>
+</section>
+
+<section id="sources">
+  <div class="head"><h2>Sources</h2></div>
+  <div id="srcBody"><ul style="columns:2 320px;padding-left:18px"><li><a href="https://energycodeace.com/content/ra447-recirculation-systems" target="_blank" rel="noopener">Energy Code Ace RA4.4.7: recirculation systems</a></li><li><a href="https://energycodeace.com/content/ra4418-hers-verified-demand-recirculation-sensor-control" target="_blank" rel="noopener">Energy Code Ace RA4.4.18: HERS demand recirc, sensor control</a></li><li><a href="https://www.bayren.org/sites/default/files/2022-12/2022-res-water-heater-alteration-permit-guide_Final.pdf" target="_blank" rel="noopener">BayREN 2022 residential water-heater alteration permit guide</a></li><li><a href="https://www.3c-ren.org/hot-water-recirculation/" target="_blank" rel="noopener">3C-REN: hot water recirculation</a></li><li><a href="https://www.greenbuildingadvisor.com/article/inefficient-hot-water-piping-layouts-waste-hot-water" target="_blank" rel="noopener">Green Building Advisor / Gary Klein: inefficient hot water piping layouts</a></li><li><a href="https://info.ornl.gov/sites/publications/Files/Pub57428.pdf" target="_blank" rel="noopener">ORNL/TM-2002/245: demand recirculation field test</a></li><li><a href="https://docs.nlr.gov/docs/fy14osti/62848.pdf" target="_blank" rel="noopener">NREL/TP-5500-62848: distribution system modelling</a></li><li><a href="https://www.tacocomfort.com/wp-content/uploads/2022/09/DHWR-Heat-Losses-Charts-various-materials.pdf" target="_blank" rel="noopener">Taco: DHW recirc heat-loss charts</a></li><li><a href="https://www.caleffi.com/en-us/blog/temperature-creep-hot-water-recirculation" target="_blank" rel="noopener">Caleffi: temperature creep in recirculation</a></li><li><a href="https://www.caleffi.com/sites/default/files/media/external-file/Idronics_21_NA_Recirculating%20domestic%20hot%20water%20systems.pdf" target="_blank" rel="noopener">Caleffi idronics 21: recirculating DHW systems</a></li><li><a href="https://www.caleffi.com/sites/default/files/media/external-file/01325_NA.pdf" target="_blank" rel="noopener">Caleffi 116 ThermoSetter datasheet</a></li><li><a href="https://circuitsolver.com/faqs/" target="_blank" rel="noopener">Watts CircuitSolver FAQ</a></li><li><a href="https://www.hotwater.com/info-center/technical-bulletins/bulletin-115947.html" target="_blank" rel="noopener">A.O. Smith Bulletin 115947: recirculation and expansion tanks</a></li><li><a href="https://www.plasticpipe.org/common/Uploaded%20files/1-PPI/Manuals-Design%20Guides/PEX%20Design%20Guide/Design%20Guide%20-%20Residential%20PEX%20Water%20Supply%20Plumbing%20Systems/Chapter%204%20%E2%80%93%20Code%20Acceptance/Chapter%204%20%E2%80%93%20Code%20Acceptance.pdf" target="_blank" rel="noopener">PPI PEX Design Guide ch. 4: support spacing</a></li><li><a href="https://diyproject.ai/cheat-sheets/pex-flow-rate" target="_blank" rel="noopener">PEX pressure-loss table</a></li><li><a href="https://esphome.io/components/sensor/dallas_temp/" target="_blank" rel="noopener">ESPHome dallas_temp</a></li><li><a href="https://ussolid.com/collections/motorized-ball-valves-html" target="_blank" rel="noopener">U.S. Solid motorized ball valves</a></li><li><a href="https://www.tacocomfort.com/product/potable-water-zone-sentry-zone-valve/" target="_blank" rel="noopener">Taco Potable Water Zone Sentry (pro valve alternative)</a></li><li><a href="https://www.grundfos.com/content/dam/local/en-us/activity-assets/domestic-cold-water/downloads/LALSL004-ALPHA-15-55-HWR-D-0220-Digital_2.pdf" target="_blank" rel="noopener">Grundfos ALPHA HWR-D demand mode</a></li><li><a href="https://www.uponor.com/en-us/products/multi-port-tees" target="_blank" rel="noopener">Uponor multi-port tees</a></li></ul><p class="hint">Prices were gathered from vendor listings in September 2026 and are marked "verify" where a listing hid the price. Code requirements are summarized from the 2022 California Energy Code references above. Confirm with Lafayette building before you buy.</p></div>
+</section>
+
+</div>
+
+<script>
+const PLAN_IMG = "__IMG__";
+const KEY = 'smartRecirc.v3';
+const ZC = ['var(--z1)','var(--z2)','var(--z3)','var(--z4)','var(--z5)'];
+
+const DEFAULT = {
+  pxPerFt: 14, south: 'top',
+  zones: [
+    {name:'Master bath', trigger:'light.main_bathroom_lights'},
+    {name:'Bath 03', trigger:'light.birdie_bathroom_lights (verify which bath)'},
+    {name:'Bath 02', trigger:'light.guest_bathroom_shower_lights (verify)'},
+    {name:'Kitchen', trigger:'kitchen presence 06:00–21:00'},
+    {name:'Laundry + powder', trigger:'powder light / washer start', existing:true},
+  ],
+  els: [
+    {id:'whL', type:'heater', label:'Water heater L', x:1135, y:45},
+    {id:'whR', type:'heater', label:'Water heater R', x:1185, y:45},
+    {id:'mix', type:'mixer',  label:'Mixing valve', x:1185, y:118},
+    {id:'sup', type:'supply', label:'Supply manifold', x:1105, y:118},
+    {id:'hdr', type:'pump',   label:'Return manifold + pump', x:1000, y:60},
+    {id:'m0', type:'manifold', zone:0, label:'M1 master toilet', x:168, y:236},
+    {id:'m1', type:'manifold', zone:1, label:'M2 WIC 03', x:455, y:300},
+    {id:'m2', type:'manifold', zone:2, label:'M3 WIC 02', x:718, y:305},
+    {id:'m3', type:'manifold', zone:3, label:'M4 pantry', x:1768, y:262},
+    {id:'f1', type:'fixture', zone:0, label:'Master tub', x:265, y:132},
+    {id:'f2', type:'fixture', zone:0, label:'Master shower', x:380, y:238},
+    {id:'f3', type:'fixture', zone:0, label:'Master sink L', x:140, y:160},
+    {id:'f4', type:'fixture', zone:0, label:'Master sink R', x:388, y:160},
+    {id:'f5', type:'fixture', zone:1, label:'Bath 03 shower', x:430, y:132},
+    {id:'f6', type:'fixture', zone:1, label:'Bath 03 sink', x:455, y:230},
+    {id:'f7', type:'fixture', zone:2, label:'Bath 02 shower', x:705, y:170},
+    {id:'f8', type:'fixture', zone:2, label:'Bath 02 sink', x:722, y:266},
+    {id:'f9', type:'fixture', zone:4, label:'Washer', x:790, y:505},
+    {id:'f10', type:'fixture', zone:4, label:'Laundry sink', x:845, y:505},
+    {id:'f11', type:'fixture', zone:4, label:'Powder sink', x:1080, y:447},
+    {id:'f12', type:'fixture', zone:3, label:'Kitchen sink', x:1728, y:366},
+    {id:'f13', type:'fixture', zone:3, label:'Dishwasher', x:1482, y:322},
+  ]
+};
+
+let S = load();
+let sel = null, sim = null, cal = null;
+
+function load(){
+  try{ const s = JSON.parse(localStorage.getItem(KEY)); if(s && s.els) return s; }catch(e){}
+  return structuredClone(DEFAULT);
+}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+const byId = id => S.els.find(e=>e.id===id);
+const ofType = t => S.els.filter(e=>e.type===t);
+const man = (a,b) => Math.abs(a.x-b.x)+Math.abs(a.y-b.y);
+const ft = px => px / S.pxPerFt;
+
+// Orthogonal route: run along the south axis first, then across (like a trunk hung under the joists).
+function route(a,b){
+  const alongX = (S.south==='top'||S.south==='bottom');
+  return alongX ? `M${a.x},${a.y} H${b.x} V${b.y}` : `M${a.x},${a.y} V${b.y} H${b.x}`;
+}
+
+// Return leg bends the other way so each loop reads as a loop on the plan.
+function routeBack(a,b){
+  const alongX = (S.south==='top'||S.south==='bottom');
+  return alongX ? `M${a.x},${a.y} V${b.y} H${b.x}` : `M${a.x},${a.y} H${b.x} V${b.y}`;
+}
+function loopOut(sup,m,i){
+  if(!(S.south==='top'||S.south==='bottom')) return route(sup,m);
+  const x0 = sup.x-28+i*14, lane = sup.y+16+i*9;
+  return `M${x0},${sup.y} V${lane} H${m.x} V${m.y}`;
+}
+function loopBack(m,hdr,i){
+  if(!(S.south==='top'||S.south==='bottom')) return routeBack(m,hdr);
+  const x1 = hdr.x-4+i*10, lane = hdr.y+34+i*9;
+  return `M${m.x},${m.y} V${m.y} H${m.x+10} V${lane} H${x1} V${hdr.y}`;
+}
+function computeRuns(){
+  const sup = byId('sup'), hdr = byId('hdr');
+  const mans = ofType('manifold');
+  const zones = S.zones.map((z,i)=>{
+    const m = mans.find(x=>x.zone===i);
+    const fx = ofType('fixture').filter(f=>f.zone===i);
+    if(!m) return {i, branches:[], out:null, ret:null, fx, m, outFt:0, branchFt:0, retFt:0, retSize:'1/2', purgeGal:0, purgeMin:0, longTwigs:[]};
+    const twig = f => ft(man(m,f)) + 4;           // 2 ft drop at manifold + 2 ft rise at fixture
+    const branches = fx.map(f=>[m,f]);
+    const longTwigs = fx.filter(f=>twig(f) > 10);
+    const branchFt = fx.reduce((s,f)=>s+twig(f),0);
+    const outFt = ft(man(sup,m)) + 6;              // loop out: supply manifold -> room manifold
+    const outSize = S.zones[i].outSize || (i===0 ? '3/4' : '1/2');   // master: tub + multiple heads; single baths/kitchen: 1/2"
+    const peakGpm = S.zones[i].peak || (i===0 ? 5 : 2.5);            // hot-side peak draw
+    // PEX-A friction, psi/100ft ≈ k·Q^1.85 (fits 1/2" 1.39@1gpm, 3/4" 0.26@1gpm, 140°F); +15 ft equivalent for fittings
+    const outPsi = (outFt+15)/100 * (outSize==='3/4'?0.26:1.39) * Math.pow(peakGpm,1.85);
+    const retFt = ft(man(m,hdr)) + 6;              // loop back: room manifold -> return manifold
+    const retSize = retFt > 80 ? '3/4' : '1/2';    // research: upsize long returns, ~5x less friction
+    const purgeGal = outFt*(outSize==='3/4'?0.0184:0.0092) + retFt*(retSize==='3/4'?0.0184:0.0092);
+    const gpm = retSize==='3/4' ? 2 : (outSize==='1/2' ? 1.0 : 1.2);   // Taco 006e3 curve minus two spring checks (research: ~1 gpm worst loop)
+    return {i, m, fx, branches, out:[sup,m], ret:[m,hdr], outFt, outSize, peakGpm, outPsi, branchFt, retFt, retSize, purgeGal, purgeMin: purgeGal/gpm, longTwigs};
+  });
+  const outTotal = zones.reduce((s,z)=>s+z.outFt,0);
+  return {zones, outTotal, trunkFt: outTotal};   // trunkFt kept as "hot supply footage" for the energy baseline
+}
+
+// ---------- SVG plan ----------
+const svg = document.getElementById('plan');
+const NS = 'http://www.w3.org/2000/svg';
+function el(tag, attrs, parent){ const e = document.createElementNS(NS, tag); for(const k in attrs) e.setAttribute(k, attrs[k]); if(parent) parent.appendChild(e); return e; }
+
+function draw(){
+  svg.innerHTML = '';
+  el('image', {href: PLAN_IMG, x:0, y:0, width:1820, height:890, opacity:.8}, svg);
+  const R = computeRuns();
+  const gP = el('g', {}, svg);
+  // compass
+  drawCompass(gP);
+  // south wall highlight
+  const sw = {top:[80,58,1790,58], bottom:[80,870,1790,870], left:[40,40,40,870], right:[1795,40,1795,870]}[S.south];
+  el('line',{x1:sw[0],y1:sw[1],x2:sw[2],y2:sw[3],stroke:'var(--brass)','stroke-width':6,'stroke-dasharray':'2 10','stroke-linecap':'round',opacity:.8},gP);
+  const active = z => sim==='all' || sim===z;
+  // branches
+  R.zones.forEach(z=>z.branches.forEach(([a,b])=>{
+    el('path',{d:route(a,b),fill:'none',stroke:ZC[z.i],'stroke-width':active(z.i)?5:3,opacity:active(z.i)?1:.75,class:active(z.i)?'flow':''},gP);
+  }));
+  // heaters -> mixer -> supply manifold, then one 3/4" loop-out per zone
+  el('path',{d:route(byId('whL'),byId('mix')),fill:'none',stroke:'var(--hot)','stroke-width':7},gP);
+  el('path',{d:route(byId('whR'),byId('mix')),fill:'none',stroke:'var(--hot)','stroke-width':7},gP);
+  el('path',{d:route(byId('mix'),byId('sup')),fill:'none',stroke:'var(--hot)','stroke-width':8},gP);
+  R.zones.forEach(z=>{ if(!z.out) return;
+    el('path',{d:loopOut(z.out[0],z.out[1],z.i),fill:'none',stroke:'var(--hot)','stroke-width':active(z.i)?7:5,class:active(z.i)?'flow':'',opacity:sim===null||active(z.i)?1:.45},gP);
+  });
+  // existing loops (kept from the old system): translucent red, supply manifold -> fixtures -> return manifold
+  S.zones.forEach((zn,i)=>{ if(!zn.existing) return;
+    const sup = byId('sup'), hdr = byId('hdr');
+    let cur = {x:sup.x-28+i*14, y:sup.y}, left = ofType('fixture').filter(f=>f.zone===i), d = `M${cur.x},${cur.y}`;
+    while(left.length){ left.sort((a,b)=>man(cur,a)-man(cur,b)); const n = left.shift(); d += ` V${n.y} H${n.x}`; cur = n; }
+    const x1 = hdr.x-4+i*10; d += ` V${hdr.y+34+i*9} H${x1} V${hdr.y}`;
+    el('path',{d,fill:'none',stroke:'var(--hot)','stroke-width':active(i)?12:10,'stroke-opacity':active(i)?.55:.3,'stroke-linejoin':'round',class:active(i)?'flow':''},gP);
+  });
+  // returns
+  R.zones.forEach(z=>{ if(!z.ret) return;
+    el('path',{d:loopBack(z.ret[0],z.ret[1],z.i),fill:'none',stroke:'var(--ret)','stroke-width':active(z.i)?5:3,'stroke-dasharray':active(z.i)?'10 8':'8 6',class:active(z.i)?'flow':'',opacity:sim===null||active(z.i)?1:.35},gP);
+  });
+  el('path',{d:route(byId('hdr'),byId('whR')),fill:'none',stroke:'var(--ret)','stroke-width':6,class:sim!==null?'flow':''},gP);
+  // markers
+  const gM = el('g', {}, svg);
+  S.els.forEach(e=>{
+    const g = el('g',{transform:`translate(${e.x},${e.y})`,'data-id':e.id,style:'cursor:grab',tabindex:0,role:'button','aria-label':e.label},gM);
+    const hot = sel===e.id;
+    if(e.type==='heater'){
+      el('rect',{x:-24,y:-30,width:48,height:60,rx:22,fill:'var(--sheet)',stroke:'var(--hot)','stroke-width':hot?6:4},g);
+      el('text',{y:6,'text-anchor':'middle','font-family':'var(--mono)','font-size':18,'font-weight':700,fill:'var(--hot)'},g).textContent = e.id==='whL'?'L':'R';
+    } else if(e.type==='mixer'){
+      el('circle',{r:16,fill:'var(--brass)',stroke:'var(--ink)','stroke-width':hot?5:2},g);
+      el('text',{y:5,'text-anchor':'middle','font-family':'var(--mono)','font-size':13,'font-weight':700,fill:'#fff'},g).textContent='TMV';
+    } else if(e.type==='pump'){
+      el('rect',{x:-48,y:-26,width:100,height:52,rx:4,fill:'var(--sheet)',stroke:'var(--ret)','stroke-width':hot?6:4},g);
+      const ang = sim!==null;
+      el('circle',{cx:-22,cy:0,r:13,fill:'none',stroke:'var(--ret)','stroke-width':3},g);
+      el('path',{d:'M-28,-6 L-14,0 L-28,6 Z',fill:'var(--ret)'},g);
+      for(let i=0;i<S.zones.length;i++) el('rect',{x:-8+i*10,y:-12,width:8,height:24,fill:(sim==='all'||sim===i)?ZC[i]:'var(--chip)',stroke:ZC[i],'stroke-width':2},g);
+    } else if(e.type==='supply'){
+      el('rect',{x:-38,y:-12,width:76,height:24,fill:'var(--brass)',stroke:'var(--ink)','stroke-width':hot?5:2},g);
+      for(let i=0;i<S.zones.length;i++) el('circle',{cx:-28+i*14,cy:0,r:5,fill:ZC[i]},g);
+    } else if(e.type==='manifold'){
+      el('rect',{x:-14,y:-14,width:28,height:28,fill:'var(--brass)',stroke:hot?'var(--ink)':ZC[e.zone],'stroke-width':hot?5:4},g);
+      el('text',{y:5,'text-anchor':'middle','font-family':'var(--mono)','font-size':13,'font-weight':700,fill:'#fff'},g).textContent='M'+(e.zone+1);
+    } else {
+      if(S.zones[e.zone] && S.zones[e.zone].existing && ofType('fixture').find(f=>f.zone===e.zone)===e) el('text',{y:-14,'text-anchor':'middle','font-family':'var(--mono)','font-size':12,fill:ZC[e.zone],stroke:'var(--sheet)','stroke-width':3,'paint-order':'stroke'},g).textContent='existing loop (kept)';
+      const long = R.zones[e.zone] && R.zones[e.zone].longTwigs.includes(e);
+      if(long) el('circle',{r:17,fill:'none',stroke:'var(--warn)','stroke-width':3,'stroke-dasharray':'4 3'},g);
+      el('circle',{r:9,fill:'var(--sheet)',stroke:ZC[e.zone],'stroke-width':hot?6:4},g);
+    }
+    if((e.type!=='fixture' && e.type!=='heater') || hot){
+      const ty = e.type==='pump' ? -34 : e.type==='mixer' ? 34 : 30;
+      el('text',{y:ty,x:e.type==='mixer'?20:0,'text-anchor':e.type==='mixer'?'start':'middle','font-family':'var(--mono)','font-size':15,'font-weight':600,fill:'var(--ink)',stroke:'var(--sheet)','stroke-width':4,'paint-order':'stroke'},g).textContent = e.type==='manifold'? e.label.replace(/^M\d\s*/,'') : e.label;
+    }
+  });
+  if(cal && cal.pts) cal.pts.forEach(p=>el('circle',{cx:p.x,cy:p.y,r:8,fill:'var(--warn)'},svg));
+  renderSide(R);
+  renderParts(R);
+  save();
+}
+
+function drawCompass(g){
+  const rot = {bottom:0, top:180, left:90, right:-90}[S.south]; // N arrow points opposite of south
+  const c = el('g',{transform:`translate(1745,110) rotate(${rot})`},g);
+  el('circle',{r:34,fill:'var(--sheet)',stroke:'var(--ink)','stroke-width':2},c);
+  el('path',{d:'M0,-28 L9,0 L0,-6 L-9,0 Z',fill:'var(--ink)'},c);
+  el('path',{d:'M0,28 L9,0 L0,6 L-9,0 Z',fill:'none',stroke:'var(--ink)','stroke-width':2},c);
+  el('text',{y:-38,'text-anchor':'middle','font-family':'var(--mono)','font-size':16,'font-weight':700,fill:'var(--ink)',transform:`rotate(${-rot} 0 -44)`},c).textContent='N';
+}
+
+// ---------- drag ----------
+let drag = null;
+function svgPt(ev){ const p = svg.createSVGPoint(); p.x = ev.clientX; p.y = ev.clientY; return p.matrixTransform(svg.getScreenCTM().inverse()); }
+svg.addEventListener('pointerdown', ev=>{
+  const p = svgPt(ev);
+  if(cal){ cal.pts.push({x:p.x,y:p.y}); if(cal.pts.length===2){ document.getElementById('calUI').hidden=false; } draw(); return; }
+  const g = ev.target.closest('[data-id]');
+  if(!g){ sel=null; draw(); return; }
+  sel = g.dataset.id; const e = byId(sel);
+  drag = {id:sel, dx:p.x-e.x, dy:p.y-e.y};
+  svg.setPointerCapture(ev.pointerId);
+  draw();
+});
+svg.addEventListener('pointermove', ev=>{
+  if(!drag) return; const p = svgPt(ev); const e = byId(drag.id);
+  e.x = Math.round(Math.max(0,Math.min(1820,p.x-drag.dx))); e.y = Math.round(Math.max(0,Math.min(890,p.y-drag.dy)));
+  draw();
+});
+svg.addEventListener('pointerup', ()=>{ drag=null; });
+svg.addEventListener('keydown', ev=>{
+  const g = ev.target.closest && ev.target.closest('[data-id]'); if(!g) return;
+  const e = byId(g.dataset.id); const d = ev.shiftKey?20:4;
+  const m = {ArrowLeft:[-d,0],ArrowRight:[d,0],ArrowUp:[0,-d],ArrowDown:[0,d]}[ev.key];
+  if(m){ e.x+=m[0]; e.y+=m[1]; sel=e.id; ev.preventDefault(); draw(); svg.querySelector(`[data-id="${e.id}"]`).focus(); }
+});
+
+// ---------- side panel ----------
+function renderSide(R){
+  const zl = document.getElementById('zoneList'); zl.innerHTML='';
+  S.zones.forEach((z,i)=>{
+    const row = document.createElement('div'); row.className='zone-row';
+    row.innerHTML = `<span class="sw" style="background:${ZC[i]}"></span><input id="zn${i}" value="${esc(z.name)}" aria-label="Zone ${i+1} name">${z.existing?'<span class="hint">existing</span>':`<select id="zs${i}" aria-label="Zone ${i+1} loop-out size"><option value="1/2" ${(z.outSize||(i===0?'3/4':'1/2'))==='1/2'?'selected':''}>1/2"</option><option value="3/4" ${(z.outSize||(i===0?'3/4':'1/2'))==='3/4'?'selected':''}>3/4"</option></select>`}<button type="button" data-add="${i}" title="Add a fixture to this zone">+ fixture</button><input class="trig" id="zt${i}" value="${esc(z.trigger)}" aria-label="Zone ${i+1} trigger">`;
+    zl.appendChild(row);
+  });
+  zl.querySelectorAll('input').forEach(inp=>inp.addEventListener('change',()=>{
+    const i = +inp.id.slice(2); S.zones[i][inp.id[1]==='n'?'name':'trigger'] = inp.value; draw();
+  }));
+  zl.querySelectorAll('select').forEach(sl=>sl.onchange=()=>{ S.zones[+sl.id.slice(2)].outSize = sl.value; draw(); });
+  zl.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>{
+    const i=+b.dataset.add, m = ofType('manifold').find(x=>x.zone===i)||{x:900,y:400};
+    const id='f'+Date.now(); S.els.push({id,type:'fixture',zone:i,label:'New fixture',x:m.x+40,y:m.y+60}); sel=id; draw();
+  });
+  // inspector
+  const insp = document.getElementById('insp');
+  const e = sel && byId(sel);
+  if(!e){ insp.innerHTML='Click a marker. Drag to move it. Arrow keys nudge a focused marker.'; }
+  else {
+    const zoneSel = (e.type==='fixture'||e.type==='manifold') ? `<label class="inl" for="iz">Zone <select id="iz">${S.zones.map((z,i)=>`<option value="${i}" ${i===e.zone?'selected':''}>${esc(z.name)}</option>`).join('')}</select></label>` : '';
+    insp.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px">
+      <label class="inl" for="il">Label <input id="il" value="${esc(e.label)}"></label>${zoneSel}
+      <span class="mono">x ${e.x} · y ${e.y}</span>
+      ${e.type==='fixture'?'<button type="button" id="idel">Remove fixture</button>':''}</div>`;
+    insp.querySelector('#il').onchange = ev=>{ e.label = ev.target.value; draw(); };
+    const iz = insp.querySelector('#iz');
+    if(iz) iz.onchange = ev=>{
+      const nz = +ev.target.value;
+      if(e.type==='manifold'){ const other = ofType('manifold').find(m=>m.zone===nz); if(other) other.zone = e.zone; e.label = `M${nz+1} `+e.label.replace(/^M\d\s*/,''); if(other) other.label = `M${other.zone+1} `+other.label.replace(/^M\d\s*/,''); }
+      e.zone = nz; draw();
+    };
+    const del = insp.querySelector('#idel'); if(del) del.onclick = ()=>{ S.els = S.els.filter(x=>x!==e); sel=null; draw(); };
+  }
+  // lengths
+  const lt = document.getElementById('lenTbl');
+  lt.innerHTML = `<tr><th>Loop</th><th class="num">Out</th><th class="num">Back</th><th class="num">Fixture lines</th><th class="num">Purge</th><th class="num">Out-leg drop at peak</th></tr>` +
+    R.zones.filter(z=>z.m).map(z=>`<tr><td><span class="sw" style="display:inline-block;background:${ZC[z.i]};vertical-align:-2px"></span> ${esc(S.zones[z.i].name)}</td><td class="num">${z.outFt.toFixed(0)} ft ${z.outSize}"</td><td class="num">${z.retFt.toFixed(0)} ft ${z.retSize}"</td><td class="num">${z.branchFt.toFixed(0)} ft</td><td class="num">${z.purgeGal.toFixed(1)} gal · ${fmtMin(z.purgeMin)}</td><td class="num" style="color:${z.outPsi>10?'var(--warn)':'inherit'}">${z.outPsi.toFixed(1)} psi @ ${z.peakGpm} gpm</td></tr>`).join('') +
+    '';
+  // sim buttons
+  const sb = document.getElementById('simBtns');
+  sb.innerHTML = S.zones.map((z,i)=>`<button type="button" data-sim="${i}" class="${sim===i?'on':''}">${esc(z.name)}</button>`).join('') + `<button type="button" data-sim="all" class="${sim==='all'?'on':''}">Thermal battery</button>`;
+  sb.querySelectorAll('button').forEach(b=>b.onclick=()=>{ const v = b.dataset.sim==='all'?'all':+b.dataset.sim; sim = sim===v?null:v; draw(); schem(); });
+  const st = document.getElementById('simText');
+  if(sim===null) st.textContent = 'Pick a zone to see what runs.';
+  else if(sim==='all') st.innerHTML = 'Powerwall at 100% and heaters at 150°F: all four valves open and the pump runs, storing surplus solar as heat. Returns time out at 15 min or when the heaters drop below setpoint.';
+  else if(S.zones[sim].existing) st.innerHTML = `<b>${esc(S.zones[sim].name)}</b> (existing loop, kept): trigger opens valve V${sim+1} on the return manifold and runs the pump until return sensor T${sim+1} reads 102°F or rises 10°F, capped at 5 min. Purge time gets measured at commissioning since the old pipe's length is unknown.`;
+  else { const z = R.zones[sim]; st.innerHTML = `<b>${esc(S.zones[sim].name)}</b>: trigger <span class="mono">${esc(S.zones[sim].trigger)}</span> opens the far-end valve V${sim+1} on the return manifold; after 5 s the pump starts. It pushes ${z.purgeGal.toFixed(1)} gal through (${fmtMin(z.purgeMin)}) and stops when return sensor T${sim+1} reads 102°F or rises 10°F, capped at 5 min. The other three loops still deliver hot water on demand, they just don't circulate.${z.longTwigs.length?` <b style="color:var(--warn)">${z.longTwigs.length} twig(s) over 10 ft.</b>`:''}`; }
+}
+function fmtMin(m){ const t=Math.round(m*60); return t<90? t+' s' : (t/60).toFixed(1)+' min'; }
+function esc(s){ return String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+// ---------- toolbar ----------
+const southSel = document.getElementById('southSel'), pxft = document.getElementById('pxft');
+southSel.value = S.south; pxft.value = S.pxPerFt;
+southSel.onchange = ()=>{ S.south = southSel.value; draw(); };
+pxft.onchange = ()=>{ S.pxPerFt = +pxft.value || 14; draw(); };
+document.getElementById('calBtn').onclick = ()=>{ cal = {pts:[]}; document.getElementById('calUI').hidden = true; document.getElementById('calBtn').classList.add('on'); };
+document.getElementById('calApply').onclick = ()=>{
+  if(cal && cal.pts.length===2){ const d = Math.hypot(cal.pts[0].x-cal.pts[1].x, cal.pts[0].y-cal.pts[1].y); const f = +document.getElementById('calFt').value; if(f>0){ S.pxPerFt = +(d/f).toFixed(2); pxft.value = S.pxPerFt; } }
+  cal = null; document.getElementById('calUI').hidden = true; document.getElementById('calBtn').classList.remove('on'); draw();
+};
+document.getElementById('exportBtn').onclick = ()=>{
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(S,null,2)],{type:'application/json'})); a.download = 'recirc-layout.json'; a.click();
+};
+document.getElementById('importFile').onchange = ev=>{
+  const f = ev.target.files[0]; if(!f) return;
+  f.text().then(t=>{ try{ const s = JSON.parse(t); if(s.els && s.zones){ S = s; southSel.value=S.south; pxft.value=S.pxPerFt; draw(); } }catch(e){ document.getElementById('simText').textContent='That file is not a layout export.'; } });
+};
+document.getElementById('resetBtn').onclick = ()=>{ document.getElementById('resetConfirm').hidden=false; };
+document.getElementById('resetNo').onclick = ()=>{ document.getElementById('resetConfirm').hidden=true; };
+document.getElementById('resetYes').onclick = ()=>{ S = structuredClone(DEFAULT); southSel.value=S.south; pxft.value=S.pxPerFt; sel=null; document.getElementById('resetConfirm').hidden=true; draw(); };
+
+// ---------- schematic ----------
+function schem(){
+  const s = document.getElementById('schem'); s.innerHTML='';
+  const L = (d,c,w,dash,cls)=>el('path',{d,fill:'none',stroke:c,'stroke-width':w,...(dash?{'stroke-dasharray':dash}:{}),...(cls?{class:cls}:{})},s);
+  const T = (x,y,t,a='middle',c)=>{ const e = el('text',{x,y,'text-anchor':a,...(c?{fill:c}:{})},s); e.textContent=t; return e; };
+  const on = i => sim==='all'||sim===i;
+  // heaters
+  [[40,'L'],[100,'R']].forEach(([x,t])=>{ el('rect',{x,y:40,width:44,height:80,rx:18,fill:'var(--sheet)',stroke:'var(--hot)','stroke-width':3},s); T(x+22,86,t,'middle','var(--hot)'); });
+  T(40,142,'2 tanks','start');
+  L('M62,40 V20 H122 V40','var(--hot)',4); L('M92,20 V10 H175','var(--hot)',4);
+  el('circle',{cx:190,cy:10,r:12,fill:'var(--brass)'},s); T(190,-8,'mixing valve');
+  // trunk
+  L('M202,10 H226','var(--hot)',5); el('rect',{x:218,y:2,width:276,height:16,fill:'var(--brass)'},s); T(540,-8,'supply manifold (at heaters) → 3/4" loop out','end');
+  const xs=[232,294,356,418,480];
+  xs.forEach((x,i)=>{
+    L(`M${x},10 V70`,'var(--hot)',4, null, on(i)?'flow':'');
+    el('rect',{x:x-14,y:70,width:28,height:22,fill:'var(--brass)'},s); T(x,86,'M'+(i+1),'middle','#fff'); if(i===3) T(x+30,74,'room manifold','start');
+    if(S.zones[i].existing){ el('rect',{x:x-14,y:70,width:28,height:22,fill:'var(--sheet)',stroke:ZC[i],'stroke-width':2,'stroke-dasharray':'3 2'},s); T(x,86,'old','middle',ZC[i]); }
+    L(`M${x},92 V150`,ZC[i],3,null,on(i)?'flow':'');
+    el('circle',{cx:x,cy:158,r:8,fill:'var(--sheet)',stroke:ZC[i],'stroke-width':3},s);
+    T(x,182,S.zones[i].name.split(' ')[0]);
+    // return
+    L(`M${x+14},81 H${x+26} V206 H${x} `,'var(--ret)',3,'6 4',on(i)?'flow':'');
+    el('path',{d:`M${x-7},206 L${x+7},206 L${x},218 Z`,fill:'var(--ink)'},s); // check valve
+    el('circle',{cx:x,cy:236,r:5,fill:'var(--ret)'},s); T(x+12,240,'T'+(i+1),'start','var(--ret)');
+    el('rect',{x:x-9,y:258,width:18,height:18,fill:on(i)?ZC[i]:'var(--sheet)',stroke:ZC[i],'stroke-width':3},s);
+    T(x+14,272,'V'+(i+1),'start');
+    L(`M${x},218 V258 M${x},276 V300`,'var(--ret)',3,null,on(i)?'flow':'');
+  });
+  T(530,214,'check valve','start'); T(530,240,'temp sensor','start'); T(530,272,'far-end valve','start'); T(530,300,'return manifold','start');
+  L('M480,300 H100','var(--ret)',4,null,sim!==null?'flow':'');
+  el('circle',{cx:150,cy:300,r:12,fill:'var(--sheet)',stroke:'var(--ret)','stroke-width':3},s);
+  el('path',{d:'M144,294 L158,300 L144,306 Z',fill:'var(--ret)'},s);
+  T(150,324,'ECM pump');
+  L('M100,300 H122 V120','var(--ret)',4,null,sim!==null?'flow':''); T(128,230,'to cold inlet','start','var(--ret)');
+  const sb = document.getElementById('schemBtns');
+  sb.innerHTML = S.zones.map((z,i)=>`<button type="button" data-s="${i}" class="${sim===i?'on':''}">${esc(z.name)}</button>`).join('') + `<button type="button" data-s="all" class="${sim==='all'?'on':''}">Thermal battery</button>`;
+  sb.querySelectorAll('button').forEach(b=>b.onclick=()=>{ const v=b.dataset.s==='all'?'all':+b.dataset.s; sim = sim===v?null:v; draw(); schem(); });
+}
+
+// ---------- parts ----------
+
+const BOUGHT_KEY = 'smartRecirc.bought';
+let bought = {}; try{ bought = JSON.parse(localStorage.getItem(BOUGHT_KEY))||{}; }catch(e){}
+const roll = f => Math.max(1, Math.ceil(f*1.15/100));    // 100 ft coils incl. 15% waste
+// cheapest mix of 300 ft + 100 ft coils (Apex: 300 = $121.42, 100 = $40.68)
+function coils12(ft){ const need = Math.ceil(ft*1.15/100)*100; const n300 = Math.floor(need/300), n100 = Math.ceil((need-n300*300)/100); return {n300, n100, cost: n300*121.42 + n100*40.68, need}; }
+const A = (t,p,url,v,n) => ({t,p,url,v,n});   // marketplace alternative: v = ok | unv | no
+function partsList(R){
+  const nZ = S.zones.length, nExist = S.zones.filter(z=>z.existing).length;
+  const newZ = R.zones.filter(z=>z.m);
+  const v12 = newZ.filter(z=>z.retSize==='1/2').length, v34 = newZ.filter(z=>z.retSize==='3/4').length + nExist;  // existing loop assumed 3/4"
+  const out12 = newZ.filter(z=>z.outSize==='1/2').reduce((s,z)=>s+z.outFt,0);
+  const out34 = newZ.filter(z=>z.outSize==='3/4').reduce((s,z)=>s+z.outFt,0);
+  // fixture lines are existing (room manifolds stay in the walls), so only loop legs are bought
+  const ft12 = newZ.filter(z=>z.retSize==='1/2').reduce((s,z)=>s+z.retFt,0) + out12;
+  const ft34 = newZ.filter(z=>z.retSize==='3/4').reduce((s,z)=>s+z.retFt,0) + out34;
+  const c12 = coils12(ft12);
+  const ins12 = Math.ceil(ft12*1.1), ins34 = Math.ceil(ft34*1.1);
+  return [
+  ['Heater room'],
+  {item:'ECM recirculation pump, potable', model:'Taco 006e3: composite body, NSF 61 + 372, cUL, 203°F, 13 ft shutoff head', src:'Amazon (Voomi Supply)', q:1, p:343.67, url:'https://www.amazon.com/dp/B07FZ8X9LR', note:'SupplyHouse is $405. Expect ~1 gpm on the longest loop after two spring checks, which is fine for demand recirc. No built-in check, so the main check below is required.',
+    amz:A('AIDPATH 45 W 304SS ECM',89.89,'https://www.amazon.com/s?k=AIDPATH+circulation+pump','no','No NSF, UL or lead-free claim'),
+    ali:A('Generic 110 V 3-speed pump',75.99,'https://www.aliexpress.us/w/wholesale-hot-water-circulation-pump.html','no','No NSF/UL marks')},
+  {item:'Pump union kit + adapters', model:'Taco UFS-075T 3/4" FNPT unions + 2× 3/4" F1960 × MNPT LF', src:'SupplyHouse + PexUniverse', q:1, p:44.38, url:'https://www.supplyhouse.com/Taco-UFS-075T-3-4-Union-FNPT-Fitting-Kit', note:'Check the tailpieces carry a lead-free mark.'},
+  {item:'Master mixing valve, 3/4", F1960 ends', model:'Watts LFMMVM1-CEF (6551632): ASSE 1017, 0.5–12 gpm, 80–120°F', src:'SupplyHouse', q:1, p:150.52, url:'https://www.supplyhouse.com/Watts-6551632-3-4-LFMMVM1-CEF-Lead-Free-Mixing-Valve-Expansion-PEX', note:'Direct PEX ends, no threads. Avoid Caleffi 521: its 1.3 gpm minimum flow is right at recirc flow.',
+    amz:A('Watts LFMMV-M1-UT (union NPT) + 3 adapters',146,'https://www.amazon.com/dp/B007VHHENG','ok','Genuine Watts via Big Frog Supply. About $4 cheaper but 6 extra threaded joints.'),
+    ali:A('3/4" brass thermostatic valve',30.88,'https://www.aliexpress.us/item/3256805143075129.html','no','35–55°C, no ASSE 1017, no lead-free claim, BSP')},
+  {item:'Thermal expansion tank, potable', model:'Amtrol ST-12 (4.4 gal), precharge to house pressure', src:'Amazon', q:1, p:67.00, url:'https://www.amazon.com/dp/B001BNPSFW', note:'One is enough at 60 psi static or below. Above that, add the second tank (optional row). Measure static pressure first; CA requires a PRV above 80 psi.',
+    amz:A('EFIELD 4.5 gal',60.99,'https://www.amazon.com/s?k=EFIELD+expansion+tank+4.5','unv','"Potable" with no cert number'),
+    ali:A('none found',0,'','no','')},
+  {opt:1, item:'Second expansion tank (static pressure over 60 psi)', model:'Amtrol ST-12 on a tee', src:'Amazon', q:1, p:67.00, url:'https://www.amazon.com/dp/B001BNPSFW', note:'Two ST-12s ($134) beat one ST-25V ($271).'},
+  {item:'Throttling valves, return split (heater vs mixer cold port)', model:'Wright PPX034-LF 3/4" F1960 lead-free ball valve, used to throttle', src:'PexUniverse', q:2, p:7.95, url:'https://pexuniverse.com/pex-expansion-ball-valves', note:'Set once at commissioning. A lead-free multi-turn stop (Everbilt 220-2-34-EB + adapters, ~$28 each) is easier to fine-tune. Hydronic balancing valves (Taco Accu-Flo) are not potable-rated.'},
+  {item:'Spring check valve, main, 3/4" F1960', model:'Jomar 105-634G lead-free, NSF 61/372', src:'Midwest Supply', q:1, p:28.08, url:'https://midwestsupplyus.com/products/jomar-105-634g', note:'After the pump (RA4.4.7).'},
+  ['Return manifold (one lane per loop)'],
+  {item:'Motorized ball valve 1/2", 3-wire', model:'U.S. Solid JFMSV00001 SS304, NSF 61 claimed, 32–194°F, PTFE seat', src:'ussolid.com', q:v12, p:37.69, url:'https://ussolid.com/products/u-s-solid-motorized-ball-valve-1-2-stainless-steel-electrical-ball-valve-with-full-port-9-24-v-ac-dc-3-wire-setup-html', note:'Relay on → open, off → drives closed. Ask U.S. Solid for the NSF 61/372 certificate before inspection (not in NSF\'s public listing).',
+    amz:A('Same U.S. Solid valve',40.59,'https://www.amazon.com/dp/B06XD3W8QD','ok','$3 more than direct'),
+    ali:A('SS304 CR05 DN15 valve',14.80,'https://www.aliexpress.us/w/wholesale-cr05-motorized-ball-valve-ss304.html','no','BSP threads, NBR seals marginal at 65°C, no NSF')},
+  {item:'Motorized ball valve 3/4", 3-wire', model:'U.S. Solid USS-MSV00002 SS304 (existing loop + any 3/4" returns)', src:'ussolid.com', q:v34, p:38.69, url:'https://ussolid.com/products/u-s-solid-motorized-ball-valve-3-4-stainless-steel-electrical-ball-valve-with-full-port-9-24-v-ac-dc-3-wire-setup-html', note:'Match the existing loop\'s pipe size.'},
+  {opt:1, item:'Spare motorized valve 1/2"', model:'U.S. Solid JFMSV00001', src:'ussolid.com', q:1, p:37.69, url:'https://ussolid.com/products/u-s-solid-motorized-ball-valve-1-2-stainless-steel-electrical-ball-valve-with-full-port-9-24-v-ac-dc-3-wire-setup-html'},
+  {item:'Spring check valve per lane, 1/2" F1960', model:'Jomar 105-633G lead-free, NSF 61/372', src:'Midwest Supply', q:v12, p:21.75, url:'https://midwestsupplyus.com/products/jomar-105-633g', note:'Threaded Wright SPT012-LF ($6.35) + 2 adapters costs about the same and adds 2 threaded joints.',
+    amz:A('Midline 372U234 1/2" FIP + 2 adapters',22.61,'https://www.amazon.com/dp/B088LMJ8HM','unv','Lead-free claimed; no temperature rating'),
+    ali:A('304SS inline check',3.27,'https://www.aliexpress.us/item/3256806155027308.html','no','No NSF, no seal/temp spec')},
+  {item:'Spring check valve per lane, 3/4" F1960', model:'Jomar 105-634G lead-free', src:'Midwest Supply', q:v34, p:28.08, url:'https://midwestsupplyus.com/products/jomar-105-634g'},
+  {item:'Isolation ball valves 1/2" F1960, box of 10', model:'Wright PPX012-LF lead-free full port', src:'PexUniverse', q:1, unit:'box', p:48.50, url:'https://pexuniverse.com/pex-expansion-ball-valves', note:'Supply outlets, return lanes, room-manifold inlets. Uponor LFR4815050 is $10.60 each if you want the brand an inspector knows.',
+    amz:A('EFIELD 10-pack 1/2" F1960',47.50,'https://www.amazon.com/dp/B0B3T7MGRN','unv','cUPC claimed, no file number'),
+    ali:A('BSP ball valves only',2.79,'','no','Not F1960')},
+  {item:'Isolation ball valves 3/4" F1960', model:'Wright PPX034-LF', src:'PexUniverse', q:6, p:7.95, url:'https://pexuniverse.com/pex-expansion-ball-valves',
+    amz:A('EFIELD 10-pack 3/4"',60.99,'https://www.amazon.com/s?k=EFIELD+VALVE158-10','unv','$6.10 each but pack of 10')},
+  {item:'Sensor stubs', model:'2× Uponor LF4515050 + 6" of 1/2" Type L copper, per lane', src:'Apex + Amazon', q:1, unit:'lot', p:26.48, url:'https://www.amazon.com/dp/B001G5137C', note:'Or clamp each probe on a brass adapter body and skip the copper.'},
+  ['Controls & sensors'],
+  {item:'ESP32 relay board, 8× SPDT relays, 5–30 V', model:'ESP32-WROOM-32E x8 (ESPHome device page: esp32e-relay-x8)', src:'Amazon', q:1, p:18.99, url:'https://devices.esphome.io/devices/esp32e-relay-x8/', note:'NO/NC/COM on every relay, 2 spare, runs off the 24 V supply. Put a valve (not the pump) on GPIO12. Use a DIN interposing relay for the 120 V pump if the board spacing worries you.',
+    amz:A('KinCony KC868-A6 (nicer PCB, 6 relays)',50,'https://shop.kincony.com/products/kc868-a6-esp32-6-channel-relay-module','ok','Direct from KinCony'),
+    ali:A('Same ESP32 x8 board',16.50,'https://www.aliexpress.us/w/wholesale-esp32-8-channel-relay.html','unv','Same board, 2–3 wk')},
+  {item:'USB-TTL 3.3 V adapter (first flash)', model:'CP2102 / CH340', src:'Amazon', q:1, p:7, url:'https://www.amazon.com/s?k=cp2102+usb+ttl+3.3v'},
+  {item:'24 VDC DIN power supply', model:'Mean Well HDR-30-24 (36 W, UL508)', src:'TRC Electronics', q:1, p:19.73, url:'https://www.trcelectronics.com/products/mean-well-hdr-30-24',
+    amz:A('HDR-30-24 listing',0,'https://www.amazon.com/dp/B0779VXHBG','unv','Commingled stock; counterfeit risk'),
+    ali:A('"Mean Well" DIN PSU',6,'','no','Widely counterfeit')},
+  {item:'DS18B20 probes, 10-pack', model:'Waterproof 1 m, clone chips: wire 3-wire (powered), not parasitic', src:'Amazon', q:1, unit:'pack', p:17.99, url:'https://www.amazon.com/s?k=ds18b20+10pcs+1m', note:'Strapped outside the pipe, so nothing touches water. Adafruit #381 genuine is $9.95 each.',
+    ali:A('DS18B20 probes',1.2,'','unv','All clones; fine when powered')},
+  {item:'Enclosure, DIN rail, terminals, 18/3 wire', model:'LeMotech IP65 box + rail + blocks + 150 ft Southwire 18/3', src:'Amazon + Home Depot', q:1, unit:'lot', p:86, url:'https://www.homedepot.com/s/southwire%2018-3%20thermostat%20wire'},
+  {item:'Zigbee push button (code-required manual control)', model:'SONOFF SNZB-01P', src:'Amazon', q:nZ, p:14.87, url:'https://www.amazon.com/s?k=SONOFF+SNZB-01P',
+    ali:A('Tuya TS0041 1-button',5,'https://www.aliexpress.us/w/wholesale-ts0041.html','unv','Works in Z2M; weaker build, 2–3 wk')},
+  {opt:1, item:'mmWave presence sensor', model:'SONOFF SNZB-06P24 (24 GHz, Zigbee, zones)', src:'Amazon', q:2, p:24.90, url:'https://www.amazon.com/s?k=SONOFF+SNZB-06P',
+    ali:A('Tuya ZY-M100',15,'','no','Floods the Zigbee mesh; unsupported variants')},
+  ['Pipe & fittings (PEX-A, F1960)'],
+  {item:`1/2" PEX-A: ${[c12.n300?c12.n300+'× 300 ft':'', c12.n100?c12.n100+'× 100 ft':''].filter(Boolean).join(' + ')}`, model:'Uponor AquaPEX white (CL5)', src:'Apex Supply', q:1, unit:'lot', p:c12.cost, url:'https://apexsupplyco.com/products/uponor-aquapex-white-coil-300ft', note:`${ft12.toFixed(0)} ft of loop legs (${c12.need} ft with waste). Fixture lines are existing. Apex shipping isn't quoted; SupplyHouse is the fallback (~40% more).`,
+    amz:A('SharkBite PEX-A 1/2"×300 ft',126.90,'https://www.amazon.com/dp/B0BNWBM9X3','ok','NSF-listed CL5. Avoid Apollo PEX-A (CL3) and Flair-It (CL1).'),
+    ali:A('SucceBuy PEX-A',68,'','no','No certification')},
+  {item:'3/4" PEX-A, 100 ft coil', model:'Uponor AquaPEX white TF1040750', src:'Apex Supply', q:Math.max(1,Math.ceil(ft34*1.15/100)), unit:'coil', p:70.32, url:'https://apexsupplyco.com/products/uponor-aquapex-white-coil-100ft', note:`${ft34.toFixed(0)} ft of 3/4" loop legs.`,
+    amz:A('EFIELD PEX-A 3/4"×100',69.38,'https://www.amazon.com/dp/B09W88YRGW','unv','Probably CL5; check the print on the coil')},
+  {item:'1" PEX-A, 20 ft stick', model:'Uponor TF1921000 (mixer → supply manifold)', src:'Apex Supply', q:1, p:35.80, url:'https://apexsupplyco.com/products/uponor-aquapex-white-stick-20ft'},
+  {item:'Supply manifold', model:'Uponor EP multi-port tee Q2241057: 1" in, 3/4" run-out, 4 × 1/2"', src:'SupplyHouse', q:1, p:31.93, url:'https://www.supplyhouse.com/sh/control/search/~SEARCH_STRING=Q2241057', note:'Exactly 1× 3/4" + 4× 1/2" loops. If the existing loop is 3/4", use Q2241051 + a Q4751175 reducing tee instead.',
+    amz:A('EFIELD PPSU 4-outlet manifold',12.40,'https://www.amazon.com/dp/B09TP73TXD','unv','Not NSF-listed; trunk size unclear')},
+  {item:'Return header', model:'Uponor EP multi-port tee Q2247557: 3/4" run, 4 × 1/2"', src:'SupplyHouse', q:1, p:13.33, url:'https://www.supplyhouse.com/sh/control/search/~SEARCH_STRING=Q2247557'},
+  {item:'EP fittings: elbows, tees, couplings, reducers', model:'Uponor ProPEX EP, ~60 pcs', src:'Apex Supply', q:1, unit:'lot', p:113.50, url:'https://apexsupplyco.com/products/uponor-propex-ep-90-elbow-lead-free',
+    amz:A('EFIELD PPSU packs',200,'https://www.amazon.com/dp/B09ST5VF38','unv','Forced pack sizes, no saving; fittings not NSF-listed')},
+  {item:'ProPEX rings: 150 × 1/2", 40 × 3/4", 6 × 1"', model:'Uponor rings with stop', src:'Apex Supply', q:1, unit:'lot', p:79.16, url:'https://apexsupplyco.com/products/uponor-propex-ring-with-stop-lead-free', note:'Generic rings fit but drop Uponor\'s warranty from 25 to 10 years.',
+    amz:A('EFIELD rings',50,'https://www.amazon.com/dp/B08HKW9Q86','unv','$0.25 each; warranty hit'),
+    ali:A('KING SMART rings 160 pk',27,'https://www.aliexpress.us/item/3256810523302716.html','no','No certification')},
+  {item:'LF brass adapters (room manifolds, heaters, pump)', model:'Uponor LF45 sweat/NPT × ProPEX, ~12 pcs', src:'Apex + SupplyHouse', q:1, unit:'lot', p:92.63, url:'https://apexsupplyco.com/products/uponor-propex-brass-female-adapter-copper-sweat-x-pex-expansion-lead-free', note:'Use FEMALE sweat to join existing copper tube. Check each wall manifold\'s size/type first.',
+    amz:A('EFIELD 3/4" F sweat 10-pk',39.50,'https://www.amazon.com/dp/B08YDG5ZZ6','unv','Not NSF-listed. Trap: B088LQT8T8 is crimp (F1807).')},
+  ['Insulation & support'],
+  {item:'Pipe insulation 5/8" ID × 1" wall (1/2" PEX)', model:'Everhot closed-cell PE, E84 25/50, 200°F', src:'PexUniverse', q:ins12, unit:'ft', p:1.32, url:'https://pexuniverse.com/5-8-id-x-1-wall-semi-slit-pipe-insulation', note:'All new pipe is loop pipe, so Title 24 wants 1" wall (105–140°F). Keep the loops at 140°F or below; above that needs 1.5".',
+    amz:A('Manson fiberglass 1"',4.87,'https://www.amazon.com/dp/B06WWQ74LB','ok','Complies but 3.7× the price'),
+    ali:A('NBR foam tubes',0,'','no','Thin walls, no ASTM data')},
+  {item:'Pipe insulation 7/8" ID × 1" wall (3/4" PEX)', model:'Everhot closed-cell PE', src:'PexUniverse', q:ins34, unit:'ft', p:1.61, url:'https://pexuniverse.com/7-8-id-x-1-wall-semi-slit-pipe-insulation',
+    amz:A('Generic NBR rubber',3.80,'https://www.amazon.com/dp/B0HCTN4CL9','unv','No conductivity/E84 data')},
+  {item:'Insulation tape for fittings + manifolds', model:'Armacell 2" × 30 ft foam tape (with PE offcuts)', src:'Home Depot', q:2, p:17.98, url:'https://www.homedepot.com/p/100539553'},
+  {item:'Hanger strap, loops under insulated pipe', model:'Oatey 3/4" × 100 ft plastic strap + #8 screws/washers', src:'Home Depot', q:3, p:19.48, url:'https://www.homedepot.com/p/301505502', note:'Every 32" max. Insulation stays continuous, so no gaps for an inspector to flag.',
+    amz:A('Half clamps 100-pk (bare pipe, slit insulation)',8.99,'https://www.amazon.com/dp/B0CT4KQTPK','ok','Cheaper; breaks insulation at each clamp')},
+  {opt:1, item:'Rodent exclusion at crawl vents', model:'YARDGARD 1/4" hardware cloth 2 × 50 ft', src:'Home Depot', q:1, p:45.19, url:'https://www.homedepot.com/p/205208961', note:'Keep rodents out; don\'t armor the pipe.'},
+  ['Tools'],
+  {item:'F1960 expander, auto-rotating, 1/2"–1"', model:'iCrimp ratcheting kit', src:'Amazon', q:1, p:101.99, url:'https://www.amazon.com/dp/B0CX8LD7HV', note:'Works with Uponor rings. Do the few 1" joints at the bench.',
+    amz:A('Milwaukee M12 2432-22',475,'https://www.amazon.com/dp/B0048EJX7U','ok','Much faster in a crawl space; resells ~$300'),
+    ali:A('SD-F1960 kit',89.90,'','no','Metric 16/20/25 mm heads: do not fit US PEX')},
+  {item:'PEX cutter', model:'WORKPRO', src:'Amazon', q:1, p:15.99, url:'https://www.amazon.com/dp/B0C3B1DY1Q'},
+  {item:'Test gauge 0–200 psi + drain + adapter', model:'MEASUREMAN + boiler drain + 1/2" ProPEX × MNPT', src:'Amazon', q:1, p:18.99, url:'https://www.amazon.com/dp/B084ZV8VK3'},
+  ];
+}
+const VB = {ok:['OK','var(--ok)'], unv:['unverified','var(--warn)'], no:['fails spec','var(--hot)']};
+function altCell(a){
+  if(!a) return '<td class="hint">—</td>';
+  const [lbl,col] = VB[a.v];
+  const name = a.url ? `<a href="${a.url}" target="_blank" rel="noopener">${esc(a.t)}</a>` : esc(a.t);
+  return `<td>${a.p?`<span class="mono">$${a.p.toFixed(2)}</span> `:''}${name}<div><span class="opt" style="color:${col};border-color:${col}">${lbl}</span> <span class="hint">${esc(a.n||'')}</span></div></td>`;
+}
+function renderParts(R){
+  const rows = partsList(R);
+  let core=0, opt=0, left=0, html = `<tr><th style="width:28px"></th><th>Item</th><th>Pick (where)</th><th class="num">Qty</th><th class="num">Each</th><th class="num">Line</th><th>Amazon option</th><th>AliExpress option</th></tr>`;
+  rows.forEach((r,idx)=>{
+    if(Array.isArray(r)){ html += `<tr class="cat"><td colspan="8">${r[0]}</td></tr>`; return; }
+    if(r.q===0) return;
+    const line = r.q*r.p, k = r.item.startsWith('1/2" PEX-A') ? '1/2" PEX-A coils' : r.item;
+    if(r.opt) opt+=line; else { core+=line; if(!bought[k]) left+=line; }
+    html += `<tr class="${bought[k]?'done':''}"><td><input class="chk" type="checkbox" id="b${idx}" data-k="${esc(k)}" ${bought[k]?'checked':''} aria-label="Bought ${esc(r.item)}"></td>
+      <td class="itm"><b>${esc(r.item)}</b> ${r.opt?'<span class="opt">opt</span>':''}${r.note?`<div class="hint">${esc(r.note)}</div>`:''}</td>
+      <td>${r.url?`<a href="${r.url}" target="_blank" rel="noopener">${esc(r.model)}</a>`:esc(r.model)}<div class="hint">${esc(r.src||'')}</div></td>
+      <td class="num">${r.q}${r.unit?' '+r.unit:''}</td><td class="num">$${r.p<10?r.p.toFixed(2):r.p.toFixed(0)}</td><td class="num">$${line.toFixed(0)}</td>${altCell(r.amz)}${altCell(r.ali)}</tr>`;
+  });
+  const t = document.getElementById('partsTbl'); t.innerHTML = html;
+  t.querySelectorAll('.chk').forEach(c=>c.onchange=()=>{ bought[c.dataset.k]=c.checked; try{localStorage.setItem(BOUGHT_KEY,JSON.stringify(bought));}catch(e){} renderParts(R); });
+  const $ = n => '$'+n.toLocaleString(undefined,{maximumFractionDigits:0});
+  document.getElementById('totals').innerHTML = `<span>Core total<br><b>${$(core)}</b></span><span>Still to buy<br><b>${$(left)}</b></span><span>Optional extras<br><b>${$(opt)}</b></span><span>With ~9.5% tax<br><b>${$(core*1.095)}</b></span>`;
+  renderEnergy(R);
+}
+
+// ---------- energy ----------
+const EK = 'smartRecirc.energy';
+let E = {hrs:24, bare:1, events:12, rate:0.40, cop:3.0, loop:0};
+try{ Object.assign(E, JSON.parse(localStorage.getItem(EK))||{}); }catch(e){}
+function renderEnergy(R){
+  const box = document.getElementById('energyCalc'); if(!box) return;
+  // Taco heat-loss chart, 120°F water, 68°F air, Btu/h·ft: bare 3/4"=19, 1/2"=14; foam 7.5, 6.0
+  const loopFt = E.loop > 0 ? E.loop : 500;       // old system: 2 loops × ~250 ft of 1" PEX
+  const r1 = E.bare ? 25 : 9;                      // Taco chart, 1" PEX-a at 120°F: bare 25, 1/2" foam 9 Btu/h·ft
+  const baseBtuH = loopFt*r1;
+  const baseHeatKwh = baseBtuH*E.hrs*365/3412;
+  const baseElec = baseHeatKwh/E.cop;
+  const emporia = 117.97/25*365;                   // Emporia 'water heater pump' circuit, Sep 1–25 2026 (carries ~17 W with pump off, so not pump-only)
+  const pumpMeasured = 25*E.hrs*365/1000;          // 25 W Comfort-class pump nameplate
+  const zs = R.zones.filter(z=>z.m);
+  const avgGal = zs.reduce((s,z)=>s+z.purgeGal,0)/Math.max(1,zs.length);
+  const avgMin = zs.reduce((s,z)=>s+z.purgeMin,0)/Math.max(1,zs.length);
+  const newHeatKwh = avgGal*8.34*45*0.6*E.events*365/3412;   // ~60% of purge heat lost before/after use
+  const newElec = newHeatKwh/E.cop;
+  const newPump = 40*avgMin/60*E.events*365/1000;
+  const saved = (baseElec+pumpMeasured) - (newElec+newPump);
+  const f = n => Math.round(n).toLocaleString();
+  box.querySelector('#eOut').innerHTML = `
+   <div class="card"><span class="tag">Old · pump (est.)</span><b>${f(pumpMeasured)} kWh/yr</b><span class="hint">25 W nameplate × ${E.hrs} h/day. Your Emporia "water heater pump" circuit logged 118 kWh Sep 1–25 (${f(emporia)} kWh/yr), but it reads ~17 W with the pump off, so it carries other load. Check what's on it.</span></div>
+   <div class="card"><span class="tag">Old · 2 × 1" loops, heat loss (est.)</span><b>${f(baseElec)} kWh/yr</b><span class="hint">${f(baseBtuH)} Btu/h from ${f(loopFt)} ft of 1" loop, ${E.bare?'bare':'1/2" foam'}, ${E.hrs} h/day, ÷ COP ${E.cop}. Nearly all of that heat went into the rooms, and the extra summer AC load isn't counted.</span></div>
+   <div class="card"><span class="tag">New · demand, per zone (est.)</span><b>${f(newElec+newPump)} kWh/yr</b><span class="hint">${E.events} triggers/day × ${avgGal.toFixed(1)} gal avg purge, plus ~${f(newPump)} kWh pump.</span></div>
+   <div class="card"><span class="tag">Savings</span><b>${f(saved)} kWh/yr</b><span class="hint">≈ $${f(saved*E.rate)}/yr at $${E.rate.toFixed(2)}/kWh.</span></div>`;
+}
+function wireEnergy(){
+  const box = document.getElementById('energyCalc');
+  box.querySelectorAll('input,select').forEach(i=>{
+    const k = i.id.slice(1); i.value = E[k];
+    i.onchange = ()=>{ E[k] = +i.value; try{localStorage.setItem(EK,JSON.stringify(E));}catch(e){} draw(); };
+  });
+}
+
+
+wireEnergy(); draw(); schem();
+</script>
+</body>
+</html>
